@@ -18,12 +18,10 @@ app.get("/", (req, res) => {
   </body></hmtl>`);
 });
 
-app.post("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
+app.post("/urls", (request, res) => {
   const key = generateRandomString();
-  const value = Object.values(req.body);
-  urlDatabase[key] = value[0];
-  res.render("urls_index", templateVars);       // Respond with 'Ok' (we will replace this)
+  urlDatabase[key] = request.body.longURL;
+  res.redirect("urls");       // Respond with 'Ok' (we will replace this)
 });
 
 
@@ -37,6 +35,11 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
+
+app.post("/urls/:shortURL/updatedLong", (request, response) => {
+  urlDatabase[request.params.shortURL] = request.body.updatedLong;
+  response.redirect('/urls');
+})
 
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
