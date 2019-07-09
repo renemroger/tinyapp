@@ -28,7 +28,7 @@
       <tbody>
         <% for(let url in locals.urls) { %>
         <tr>
-          <td><%= url %></td>
+          <td><a href="/urls/<%= url %>"><%= url %> </a></td>
           <td><%= urls[url] %></td>
         </tr>
         <% } %>

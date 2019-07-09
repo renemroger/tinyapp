@@ -11,22 +11,30 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.send(`<html><body>
+  <a href="/urls">link text</a>
+  </body></hmtl>`);
 });
 
 app.post("/urls", (req, res) => {
+  let templateVars = { urls: urlDatabase };
   const key = generateRandomString();
   const value = Object.values(req.body);
   urlDatabase[key] = value[0];
-
-  console.log(req.body);  // Log the POST request body to the console
-  res.send(urlDatabase);         // Respond with 'Ok' (we will replace this)
+  res.render("urls_index", templateVars);       // Respond with 'Ok' (we will replace this)
 });
 
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
+});
+
+app.get("/u/:shortURL", (req, res) => {
+  // const longURL = ...
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 });
 
 app.get("/urls/new", (req, res) => {
@@ -59,4 +67,3 @@ function generateRandomString() {
   }
   return randomString;
 }
-
