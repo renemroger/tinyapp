@@ -26,6 +26,7 @@ app.post("/urls", (req, res) => {
   res.render("urls_index", templateVars);       // Respond with 'Ok' (we will replace this)
 });
 
+
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
@@ -46,6 +47,10 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.post("/urls/:shortURL/delete", (request, response) => {
+  delete urlDatabase[request.params.shortURL];
+  response.redirect('/urls');
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
