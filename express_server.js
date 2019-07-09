@@ -16,8 +16,12 @@ app.get("/", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
+  const key = generateRandomString();
+  const value = Object.values(req.body);
+  urlDatabase[key] = value[0];
+
   console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  res.send(urlDatabase);         // Respond with 'Ok' (we will replace this)
 });
 
 app.get("/urls", (req, res) => {
@@ -56,4 +60,3 @@ function generateRandomString() {
   return randomString;
 }
 
-console.log(generateRandomString());
