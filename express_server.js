@@ -52,6 +52,11 @@ app.post("/urls/:shortURL/delete", (request, response) => {
   response.redirect('/urls');
 })
 
+//USING href instead
+// app.post("/urls/:shortURL/edit", (request, response) => {
+//   response.redirect('/urls/' + [request.params.shortURL]);
+// })
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
