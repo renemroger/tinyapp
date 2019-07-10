@@ -2,9 +2,22 @@ const express = require("express");
 const app = express();
 const bodyParser = require('body-parser');
 const PORT = 8080; // default port 8080
+const cookieParser = require('cookie-parser');
+app.set("view engine", "ejs");
 
 app.use(bodyParser.urlencoded({ extended: true }));
-app.set("view engine", "ejs");
+app.use(cookieParser());
+
+// app.use((request, response, error) => {
+//   const cookie = request.cookies.username;
+//   if (cookie === undefined) {
+//     res.cookie('username', '');
+//     console.log('cookie created successfully');
+//   } else {
+//     next();
+//   }
+// });
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -18,15 +31,14 @@ app.get("/", (req, res) => {
   </body></hmtl>`);
 });
 
-app.post("/urls", (request, res) => {
-  const key = generateRandomString();
-  urlDatabase[key] = request.body.longURL;
-  res.redirect("urls");       // Respond with 'Ok' (we will replace this)
-});
 
 
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
+
+  let templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -36,18 +48,34 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
-app.post("/urls/:shortURL/updatedLong", (request, response) => {
-  urlDatabase[request.params.shortURL] = request.body.updatedLong;
-  response.redirect('/urls');
-})
 
 app.get("/urls/new", (req, res) => {
+
   res.render("urls_new");
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
+  let templateVars = { username: req.cookies["username"], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
+});
+
+app.post("/urls/:shortURL/updatedLong", (request, response) => {
+  urlDatabase[request.params.shortURL] = request.body.updatedLong;
+  response.redirect('/urls');
+})
+app.post("/urls", (request, res) => {
+  const key = generateRandomString();
+  urlDatabase[key] = request.body.longURL;
+  res.redirect("urls");       // Respond with 'Ok' (we will replace this)
+});
+app.post("/login", (request, response) => {
+  response.cookie('username', request.body.username);
+  response.redirect('/urls');
+});
+
+app.post("/logout", (request, response) => {
+  response.clearCookie("username");
+  response.redirect('/urls');
 });
 
 app.post("/urls/:shortURL/delete", (request, response) => {
