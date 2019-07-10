@@ -8,15 +8,6 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// app.use((request, response, error) => {
-//   const cookie = request.cookies.username;
-//   if (cookie === undefined) {
-//     res.cookie('username', '');
-//     console.log('cookie created successfully');
-//   } else {
-//     next();
-//   }
-// });
 
 
 const urlDatabase = {
@@ -50,8 +41,8 @@ app.get("/u/:shortURL", (req, res) => {
 
 
 app.get("/urls/new", (req, res) => {
-
-  res.render("urls_new");
+  let templateVars = { username: req.cookies["username"] };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
