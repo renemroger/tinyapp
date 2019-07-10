@@ -1,13 +1,19 @@
 const express = require("express");
+const path = require("path");
 const app = express();
 const bodyParser = require('body-parser');
 const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
+const generateRandomString = require('./utils/utils');
+const { users } = require('./users');
+const { validateEmail, validatePassword } = require('./validations');
+
+
+app.set("views", path.join(__dirname, "./views"));
 app.set("view engine", "ejs");
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-
 
 
 const urlDatabase = {
@@ -16,56 +22,71 @@ const urlDatabase = {
 };
 
 
-app.get("/", (req, res) => {
-  res.send(`<html><body>
+
+
+app.get("/", (request, response) => {
+  response.send(`<html><body>
   <a href="/urls">link text</a>
   </body></hmtl>`);
 });
 
 
-
-app.get("/urls", (req, res) => {
-
+app.get("/urls", (request, response) => {
+  const user_id = request.cookies["user_id"];
+  const userForHeader = users[user_id];
   let templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]
+    user: userForHeader
   };
-  res.render("urls_index", templateVars);
+  console.log(templateVars);
+  response.render("urls_index", templateVars);
 });
 
-app.get("/u/:shortURL", (req, res) => {
+app.get("/u/:shortURL", (request, response) => {
   // const longURL = ...
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+  const longURL = urlDatabase[request.params.shortURL];
+  response.redirect(longURL);
 });
 
 
-app.get("/urls/new", (req, res) => {
-  let templateVars = { username: req.cookies["username"] };
-  res.render("urls_new", templateVars);
+app.get("/urls/new", (request, response) => {
+  const user_id = request.cookies["user_id"];
+  const userForHeader = users[user_id];
+  let templateVars = { user: userForHeader };
+  response.render("urls_new", templateVars);
 });
 
-app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { username: req.cookies["username"], shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL] };
-  res.render("urls_show", templateVars);
+app.get("/registration", (request, response) => {
+  const user_id = request.cookies["user_id"];
+  const userForHeader = users[user_id];
+  let templateVars = { user: userForHeader };
+  response.render("registration", templateVars);
+});
+
+app.get("/urls/:shortURL", (request, response) => {
+  const user_id = request.cookies["user_id"];
+  const userForHeader = users[user_id];
+
+  let templateVars = { user: userForHeader, shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
+  response.render("urls_show", templateVars);
 });
 
 app.post("/urls/:shortURL/updatedLong", (request, response) => {
   urlDatabase[request.params.shortURL] = request.body.updatedLong;
   response.redirect('/urls');
 })
-app.post("/urls", (request, res) => {
+app.post("/urls", (request, response) => {
   const key = generateRandomString();
   urlDatabase[key] = request.body.longURL;
-  res.redirect("urls");       // Respond with 'Ok' (we will replace this)
+  response.redirect("urls");       // responsepond with 'Ok' (we will replace this)
 });
 app.post("/login", (request, response) => {
-  response.cookie('username', request.body.username);
+  response.cookie('user_id', request.body.id);
   response.redirect('/urls');
 });
 
 app.post("/logout", (request, response) => {
-  response.clearCookie("username");
+  response.clearCookie("user_id");
   response.redirect('/urls');
 });
 
@@ -74,28 +95,33 @@ app.post("/urls/:shortURL/delete", (request, response) => {
   response.redirect('/urls');
 })
 
-//USING href instead
-// app.post("/urls/:shortURL/edit", (request, response) => {
-//   response.redirect('/urls/' + [request.params.shortURL]);
-// })
+app.post("/registration", validatePassword, validateEmail, (request, response) => {
+
+  const randId = generateRandomString();
+  const user = {
+    id: randId,
+    email: request.body.email,
+    password: request.body.password
+  }
+  response.cookie('user_id', randId);
+  users[randId] = user;
+  response.redirect('/urls');
+})
+
+app.use((error, request, response, next) => {
+  const user_id = request.cookies["user_id"];
+  const userForHeader = users[user_id];
+  let templateVars = { user: userForHeader, error: error.error };
+  if (error && error.statusCode) {
+    response
+      .status(error.statusCode())
+      .render("error", templateVars);
+  } else {
+    response.status(500).send("Server Error: " + error);
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-//generate a random string with 6 characters containing [z-Z,a-A].
-function generateRandomString() {
-  randomString = '';
-  const A = 97;
-  const Z = 122;
-  const STRINGLENGTH = 6;
-  let capitalOrNot = 0;
-  let random = 0;
-
-  for (let i = 0; i < STRINGLENGTH; i++) {
-    capitalOrNot = (Math.random() >= 0.5) ? 32 : 0;
-    random = Math.floor(Math.random() * (Z - A)) + A;
-    randomString += String.fromCharCode(random - capitalOrNot);
-  }
-  return randomString;
-}
