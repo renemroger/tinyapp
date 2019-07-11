@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const generateRandomString = require('./utils/utils');
 const { users } = require('./users');
 const { validateEmail, validatePassword } = require('./validations');
+const urlDatabase = require('./data');
 
 
 app.set("views", path.join(__dirname, "./views"));
@@ -15,12 +16,6 @@ app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-
-const urlDatabase2 = {
-  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "test" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" },
-  i3TrGr: { longURL: "https://www.google.ca", userID: "sgq3y6" }
-};
 
 app.get("/", (request, response) => {
   response.send(`<html><body>
@@ -31,7 +26,7 @@ app.get("/", (request, response) => {
 app.get("/urls", (request, response) => {
   const user_id = request.cookies["user_id"];
   let templateVars = {
-    urls: urlDatabase2,
+    urls: urlDatabase,
     user: getUserById(user_id)
   };
   response.render("urls_index", templateVars);
@@ -39,7 +34,7 @@ app.get("/urls", (request, response) => {
 
 app.get("/u/:shortURL", (request, response) => {
 
-  const longURL = urlDatabase2[request.params.shortURL].longURL;
+  const longURL = urlDatabase[request.params.shortURL].longURL;
   response.redirect(longURL);
 });
 
@@ -65,14 +60,14 @@ app.get("/registration", (request, response) => {
 
 app.get("/urls/:shortURL", (request, response) => {
   const user_id = request.cookies["user_id"];
-  let templateVars = { user: getUserById(user_id), shortURL: request.params.shortURL, longURL: urlDatabase2[request.params.shortURL].longURL };
+  let templateVars = { user: getUserById(user_id), shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL].longURL };
   response.render("urls_show", templateVars);
 });
 
 app.post("/urls", (request, response) => {
   const key = generateRandomString();
   //IF USER IS LOGGED IN
-  urlDatabase2[key] = {
+  urlDatabase[key] = {
     longURL: request.body.longURL,
     userID: request.cookies["user_id"]
   }
@@ -101,14 +96,14 @@ app.post("/logout", (request, response) => {
 app.post("/urls/:shortURL/updatedLong", (request, response) => {
   //updating longURL  
   console.log(request.body)
-  urlDatabase2[request.params.shortURL].longURL = request.body.updatedLong;
+  urlDatabase[request.params.shortURL].longURL = request.body.updatedLong;
   response.redirect('/urls');
 })
 
 app.post("/urls/:shortURL/delete", (request, response) => {
-  console.log(urlDatabase2[request.params.shortURL]);
-  if (urlDatabase2[request.params.shortURL].userID === request.cookies["user_id"]) {
-    delete urlDatabase2[request.params.shortURL];
+  console.log(urlDatabase[request.params.shortURL]);
+  if (urlDatabase[request.params.shortURL].userID === request.cookies["user_id"]) {
+    delete urlDatabase[request.params.shortURL];
   }
   response.redirect('/urls');
 })
