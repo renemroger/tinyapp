@@ -141,10 +141,20 @@ app.use((error, request, response, next) => {
   }
 });
 
-function getUserById(cookie) {
+const getUserById = function(cookie) {
   return userForHeader = users[cookie];
-
 }
+
+const getIdByEmail = function(email, database) {
+
+  for (const user in database) {
+    if (database[user].email === email) {
+      return database[user].id;
+    }
+  }
+  return '';
+}
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
