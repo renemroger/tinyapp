@@ -13,6 +13,11 @@ const users = {
     id: "test",
     email: "1@1.com",
     password: "1"
+  },
+  "sgq3y6": {
+    id: "sgq3y6",
+    email: "test@test.com",
+    password: "1"
   }
 }
 
