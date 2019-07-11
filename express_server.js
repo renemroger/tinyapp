@@ -2,12 +2,13 @@ const express = require("express");
 const path = require("path");
 const app = express();
 const bodyParser = require('body-parser');
-const PORT = 3000; // default port 8080
+const PORT = 8080; // default port 8080
 const cookieParser = require('cookie-parser');
 const generateRandomString = require('./utils/utils');
 const { users } = require('./users');
 const { validateEmail, validatePassword } = require('./validations');
 const urlDatabase = require('./data');
+const bcrypt = require('bcrypt');
 
 
 app.set("views", path.join(__dirname, "./views"));
@@ -33,7 +34,6 @@ app.get("/urls", (request, response) => {
 });
 
 app.get("/u/:shortURL", (request, response) => {
-
   const longURL = urlDatabase[request.params.shortURL].longURL;
   response.redirect(longURL);
 });
@@ -74,18 +74,20 @@ app.post("/urls", (request, response) => {
   response.redirect("urls");       // responsepond with 'Ok' (we will replace this)
 });
 app.post("/login", (request, response) => {
-  let flag = false;
+
+  const userEmail = request.body.email;
+  const userPassword = request.body.password;
+
   for (const key in users) {
-    if (users[key].email === request.body.email &&
-      users[key].password === request.body.password) {
-      flag = true;
+    if (users[key].email === userEmail &&
+      bcrypt.compareSync(userPassword, users[key].password)) {
       response.cookie('user_id', users[key].id);
       response.redirect('/urls');
+      return;
     }
   }
-  if (!flag) {
-    response.status(403).send("Server Error: 403");
-  }
+  response.status(403).send("Server Error: 403");
+
 });
 
 app.post("/logout", (request, response) => {
@@ -113,7 +115,7 @@ app.post("/registration", validatePassword, validateEmail, (request, response) =
   const user = {
     id: randId,
     email: request.body.email,
-    password: request.body.password
+    password: bcrypt.hashSync(request.body.password, 10)
   }
   response.cookie('user_id', randId);
   users[randId] = user;

@@ -9,11 +9,6 @@ const users = {
     email: "user2@example.com",
     password: "dishwasher-funk"
   },
-  "test": {
-    id: "test",
-    email: "1@1.com",
-    password: "1"
-  },
   "sgq3y6": {
     id: "sgq3y6",
     email: "test@test.com",
