@@ -1,4 +1,4 @@
-const Error400 = require("./errors");
+const { Error400 } = require("./errors");
 const { users } = require('./users');
 
 function validatePassword(request, response, next) {

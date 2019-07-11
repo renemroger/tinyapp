@@ -1,7 +1,7 @@
 //CODE FROM LECTURE
 //https://github.com/jensen/crud-notes/tree/master/src
 
-module.exports = class Error400 extends Error {
+class Error400 extends Error {
   message() {
     "Error 400"
   }
@@ -9,3 +9,5 @@ module.exports = class Error400 extends Error {
     return 400;
   }
 }
+
+module.exports = { Error400 }

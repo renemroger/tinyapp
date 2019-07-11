@@ -21,53 +21,55 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-
-
-
 app.get("/", (request, response) => {
   response.send(`<html><body>
   <a href="/urls">link text</a>
   </body></hmtl>`);
 });
 
-
 app.get("/urls", (request, response) => {
   const user_id = request.cookies["user_id"];
-  const userForHeader = users[user_id];
   let templateVars = {
     urls: urlDatabase,
-    user: userForHeader
+    user: getUserById(user_id)
   };
-  console.log(templateVars);
   response.render("urls_index", templateVars);
 });
 
 app.get("/u/:shortURL", (request, response) => {
+  const user_id = request.cookies["user_id"];
+  let templateVars = {
+    urls: urlDatabase,
+    user: getUserById(user_id)
+  };
   // const longURL = ...
   const longURL = urlDatabase[request.params.shortURL];
-  response.redirect(longURL);
+  response.redirect(longURL, templateVars);
+});
+
+app.get("/login", (request, response) => {
+
+  const user_id = request.cookies["user_id"];
+  let templateVars = { user: getUserById(user_id) }
+  response.render('login', templateVars)
 });
 
 
 app.get("/urls/new", (request, response) => {
   const user_id = request.cookies["user_id"];
-  const userForHeader = users[user_id];
-  let templateVars = { user: userForHeader };
+  let templateVars = { user: getUserById(user_id) };
   response.render("urls_new", templateVars);
 });
 
 app.get("/registration", (request, response) => {
   const user_id = request.cookies["user_id"];
-  const userForHeader = users[user_id];
-  let templateVars = { user: userForHeader };
+  let templateVars = { user: getUserById(user_id) };
   response.render("registration", templateVars);
 });
 
 app.get("/urls/:shortURL", (request, response) => {
   const user_id = request.cookies["user_id"];
-  const userForHeader = users[user_id];
-
-  let templateVars = { user: userForHeader, shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
+  let templateVars = { user: getUserById(user_id), shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
   response.render("urls_show", templateVars);
 });
 
@@ -81,8 +83,21 @@ app.post("/urls", (request, response) => {
   response.redirect("urls");       // responsepond with 'Ok' (we will replace this)
 });
 app.post("/login", (request, response) => {
-  response.cookie('user_id', request.body.id);
-  response.redirect('/urls');
+  let flag = false;
+  console.log(users);
+  for (const key in users) {
+    console.log(users[key].email)
+    if (users[key].email === request.body.email &&
+      users[key].password === request.body.password) {
+      console.log('found you');
+      flag = true;
+      response.cookie('user_id', users[key].id);
+      response.redirect('/urls');
+    }
+  }
+  if (!flag) {
+    response.status(403).send("Server Error: 403");
+  }
 });
 
 app.post("/logout", (request, response) => {
@@ -96,22 +111,20 @@ app.post("/urls/:shortURL/delete", (request, response) => {
 })
 
 app.post("/registration", validatePassword, validateEmail, (request, response) => {
-
   const randId = generateRandomString();
   const user = {
     id: randId,
     email: request.body.email,
     password: request.body.password
   }
-  response.cookie('user_id', randId);
+  //response.cookie('user_id', randId);
   users[randId] = user;
   response.redirect('/urls');
 })
 
 app.use((error, request, response, next) => {
   const user_id = request.cookies["user_id"];
-  const userForHeader = users[user_id];
-  let templateVars = { user: userForHeader, error: error.error };
+  let templateVars = { user: getUserById(user_id), error: error.error };
   if (error && error.statusCode) {
     response
       .status(error.statusCode())
@@ -120,6 +133,11 @@ app.use((error, request, response, next) => {
     response.status(500).send("Server Error: " + error);
   }
 });
+
+function getUserById(cookie) {
+  return userForHeader = users[cookie];
+
+}
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
