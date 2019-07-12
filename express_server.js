@@ -4,9 +4,9 @@ const app = express();
 const bodyParser = require('body-parser');
 const PORT = 8080; // default port 8080
 const cookieSession = require('cookie-session');
-const generateRandomString = require('./utils/utils');
 const { users } = require('./users');
 const { validateEmail, validatePassword } = require('./validations');
+const { generateRandomString, checkIfExistsByID } = require('./utils/utils');
 const urlDatabase = require('./data');
 const bcrypt = require('bcrypt');
 
@@ -24,14 +24,13 @@ app.use(cookieSession({
   keys: ['key1', 'key2']
 }))
 
-
-
 app.get("/", (request, response) => {
 
-  request.session.views = (req.session.views || 0) + 1
-  response.send(`<html><body>
-  <a href="/urls">link text</a>
-  </body></hmtl>`);
+  if (request.session['user_id']) {
+    response.redirect('/urls');
+  } else {
+    response.redirect('/login');
+  }
 });
 
 app.get("/urls", (request, response) => {
@@ -44,15 +43,24 @@ app.get("/urls", (request, response) => {
 });
 
 app.get("/u/:shortURL", (request, response) => {
+  const _shortUrl = request.params.shortURL;
+  const user_id = request.session['user_id'];
+  if (!checkIfExistsByID(urlDatabase, _shortUrl)) {
+    response.status(400);
+    response.render('error', { error: new Error(400), user: getUserById(user_id) })
+  }
   const longURL = urlDatabase[request.params.shortURL].longURL;
   response.redirect(longURL);
 });
 
 app.get("/login", (request, response) => {
-
-  const user_id = request.session.user_id || '';
-  let templateVars = { user: getUserById(user_id) }
-  response.render('login', templateVars)
+  const user_id = request.session['user_id'];
+  if (user_id !== undefined) {
+    response.redirect('/urls');
+  } else {
+    let templateVars = { user: getUserById(user_id) }
+    response.render('login', templateVars)
+  }
 });
 
 
@@ -64,14 +72,25 @@ app.get("/urls/new", (request, response) => {
 
 app.get("/registration", (request, response) => {
   const user_id = request.session['user_id'];
-  let templateVars = { user: getUserById(user_id) };
-  response.render("registration", templateVars);
+  if (user_id !== undefined) {
+    response.redirect('/urls');
+    return;
+  } else {
+    let templateVars = { user: getUserById(user_id) };
+    response.render("registration", templateVars);
+  }
 });
+
 
 app.get("/urls/:shortURL", (request, response) => {
   const user_id = request.session['user_id'];
-  let templateVars = { user: getUserById(user_id), shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL].longURL };
-  response.render("urls_show", templateVars);
+  const _shortUrl = request.params.shortURL;
+  if (checkIfExistsByID(urlDatabase, _shortUrl)) {
+    let templateVars = { user: getUserById(user_id), shortURL: _shortUrl, longURL: urlDatabase[_shortUrl].longURL, track: urlDatabase[_shortUrl] };
+    response.render("urls_show", templateVars);
+  }
+  response.status(400);
+  response.render('error', { error: new Error(400), user: getUserById(user_id) })
 });
 
 app.post("/urls", (request, response) => {
@@ -87,6 +106,7 @@ app.post("/login", (request, response) => {
 
   const userEmail = request.body.email;
   const userPassword = request.body.password;
+  const user_id = request.session['user_id'];
 
   for (const key in users) {
     if (users[key].email === userEmail &&
@@ -96,7 +116,7 @@ app.post("/login", (request, response) => {
       return;
     }
   }
-  response.status(403).send("Server Error: 403");
+  response.render('error', { error: new Error(400), user: getUserById(user_id) })
 });
 
 app.post("/logout", (request, response) => {
@@ -111,10 +131,12 @@ app.post("/urls/:shortURL/updatedLong", (request, response) => {
 })
 
 app.post("/urls/:shortURL/delete", (request, response) => {
-  if (urlDatabase[request.params.shortURL].userID === request.session['user_id']) {
+  const user_id = request.session['user_id'];
+  if (user_id && urlDatabase[request.params.shortURL].userID === request.session['user_id']) {
     delete urlDatabase[request.params.shortURL];
+    response.redirect('/urls');
   }
-  response.redirect('/urls');
+  //TODO
 })
 
 app.post("/registration", validatePassword, validateEmail, (request, response) => {
@@ -154,8 +176,6 @@ const getIdByEmail = function(email, database) {
   }
   return '';
 }
-
-
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });

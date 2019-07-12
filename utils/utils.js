@@ -1,5 +1,5 @@
 //generate a random string with 6 characters containing [z-Z,a-A].
-module.exports = function generateRandomString() {
+function generateRandomString() {
   randomString = '';
   const A = 97;
   const Z = 122;
@@ -14,3 +14,13 @@ module.exports = function generateRandomString() {
   }
   return randomString;
 }
+
+const checkIfExistsByID = function(database, id) {
+  if (database[id]) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+module.exports = { checkIfExistsByID, generateRandomString };
