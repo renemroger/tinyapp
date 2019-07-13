@@ -49,8 +49,7 @@ app.get("/u/:shortURL", (request, response) => {
     response.status(400);
     response.render('error', { error: new Error(400), user: getUserById(user_id) })
   }
-  const longURL = urlDatabase[request.params.shortURL].longURL;
-  response.redirect(longURL);
+  response.redirect('/urls/' + _shortUrl);
 });
 
 app.get("/login", (request, response) => {
