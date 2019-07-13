@@ -85,9 +85,10 @@ app.get("/registration", (request, response) => {
 app.get("/urls/:shortURL", (request, response) => {
   const user_id = request.session['user_id'];
   const _shortUrl = request.params.shortURL;
-  if (checkIfExistsByID(urlDatabase, _shortUrl)) {
+  if (checkIfExistsByID(urlDatabase, _shortUrl) && urlDatabase[_shortUrl].userID === user_id) {
     let templateVars = { user: getUserById(user_id), shortURL: _shortUrl, longURL: urlDatabase[_shortUrl].longURL, track: urlDatabase[_shortUrl] };
     response.render("urls_show", templateVars);
+    return;
   }
   response.status(400);
   response.render('error', { error: new Error(400), user: getUserById(user_id) })
