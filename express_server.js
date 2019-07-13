@@ -10,12 +10,10 @@ const { generateRandomString, checkIfExistsByID } = require('./utils/utils');
 const urlDatabase = require('./data');
 const bcrypt = require('bcrypt');
 
-
 app.set('trust proxy', 1)
 app.set("views", path.join(__dirname, "./views"));
 app.set("view engine", "ejs");
 app.set('trust proxy', 1)
-
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -86,8 +84,8 @@ app.get("/urls/:shortURL", (request, response) => {
   const _shortUrl = request.params.shortURL;
   if (checkIfExistsByID(urlDatabase, _shortUrl) && urlDatabase[_shortUrl].userID === user_id) {
     let templateVars = { user: getUserById(user_id), shortURL: _shortUrl, longURL: urlDatabase[_shortUrl].longURL, track: urlDatabase[_shortUrl] };
-    response.render("urls_show", templateVars);
-    return;
+    return response.render("urls_show", templateVars);
+
   }
   response.status(400);
   response.render('error', { error: new Error(400), user: getUserById(user_id) })
@@ -112,8 +110,7 @@ app.post("/login", (request, response) => {
     if (users[key].email === userEmail &&
       bcrypt.compareSync(userPassword, users[key].password)) {
       request.session.user_id = users[key].id;
-      response.redirect('/urls');
-      return;
+      return response.redirect('/urls');
     }
   }
   response.render('error', { error: new Error(400), user: getUserById(user_id) })
